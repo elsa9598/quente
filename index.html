@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="우리집 반려동물 궨트 게임">
+    <meta property="og:description" content="귀여운 강아지와 고양이들의 치열한 두뇌 싸움! 승자는 누구?">
+    <meta property="og:image" content="hero_kkami.jpg">
+
+    <title>Pet Gwent: Enemy Names Updated</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap');
+        
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: #000;
+            overflow: hidden; 
+            position: fixed; 
+            touch-action: none; 
+            font-family: 'Gamja Flower', cursive;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        #game-wrapper {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            background-color: #111; z-index: 1;
+        }
+
+        #game-container {
+            width: 1500px; height: 720px; 
+            position: relative; 
+            background-image: url('background.jpg'); 
+            background-size: cover; background-position: center;
+            background-color: #3e2723;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            flex-shrink: 0; transform-origin: center center; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+
+        #input-blocker { position: absolute; top:0; left:0; width:100%; height:100%; background: transparent; z-index: 9999; display: none; cursor: wait; }
+        #msg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 10001; }
+        #msg-text { font-size: 5rem; color: #ffeb3b; font-weight: bold; text-shadow: 0 0 20px #ffeb3b; margin-bottom: 20px; text-align: center; }
+        
+        .overlay-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 6000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #fff; padding: 20px; box-sizing: border-box;
+        }
+
+        /* 캐릭터 선택 CSS */
+        #char-selection-screen { display: flex; flex-direction: column; align-items: center; width: 100%; transition: opacity 0.5s; }
+        .section-title { font-size: 3rem; color: #ffeb3b; margin-bottom: 20px; margin-top: 10px; text-shadow: 0 0 10px #ffeb3b; text-align: center; letter-spacing: 2px; }
+        .select-row { display: flex; gap: 40px; margin-bottom: 40px; justify-content: center; }
+        .char-wrapper { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.3s; opacity: 0.6; }
+        .char-wrapper:hover { opacity: 1.0; transform: scale(1.1); }
+        .char-wrapper.selected { opacity: 1.0; transform: scale(1.2); }
+        .char-wrapper.selected .char-card { border-color: #00bcd4; box-shadow: 0 0 30px #00bcd4; }
+        .char-wrapper.selected .char-name { color: #00bcd4; text-shadow: 0 0 10px #00bcd4; }
+        .char-card { width: 130px; height: 130px; border: 4px solid #555; border-radius: 50%; background-size: cover; background-position: center; background-color: #222; box-shadow: 0 0 10px #000; margin-bottom: 10px; }
+        .char-name { font-size: 2rem; color: #fff; text-shadow: 2px 2px 4px #000; }
+
+        /* 가위바위보 CSS */
+        #rps-battle-screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; animation: slideUp 0.8s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        .battle-container { display: flex; align-items: center; justify-content: center; gap: 80px; margin-bottom: 50px; }
+        .battle-avatar-wrapper { display: flex; flex-direction: column; align-items: center; }
+        .battle-avatar { width: 200px; height: 200px; border-radius: 50%; border: 8px solid #fff; object-fit: cover; box-shadow: 0 0 50px rgba(255, 255, 255, 0.3); background: #333; }
+        .battle-name-display { font-size: 2.5rem; color: #ffeb3b; margin-top: 15px; text-shadow: 0 0 10px #000; }
+        .vs-text { font-size: 6rem; color: #ff4081; text-shadow: 0 0 30px #ff4081; font-style: italic; animation: pulse 1s infinite alternate; }
+        .rps-controls { display: flex; gap: 30px; }
+        .rps-btn { font-size: 4rem; width: 120px; height: 120px; border-radius: 50%; background: #fff; border: 5px solid #aaa; cursor: pointer; transition: all 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; }
+        .rps-btn:hover { transform: scale(1.15) rotate(10deg); background: #ffeb3b; border-color: #fff; }
+        #rps-result { font-size: 3rem; color: #ffeb3b; margin-top: 30px; min-height: 60px; text-align: center; font-weight: bold; text-shadow: 0 0 15px #ff4081; }
+
+        /* 게임 UI CSS */
+        .weather-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; opacity: 0.3; display: none; }
+        #weather-frost-layer { background: linear-gradient(to bottom, #fff, #a1c4fd); }
+        #weather-fog-layer { background-color: #aaa; opacity: 0.6; }
+        #weather-rain-layer { background: url('https://www.transparenttextures.com/patterns/diag-stripes-light.png'); background-color: #555; }
+        @keyframes ice-shiver { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 75% { transform: translate(1px, -1px); } 100% { transform: translate(0, 0); } }
+        .weather-frost-effect { background-color: #37474f !important; border: 2px solid #81d4fa !important; animation: ice-shiver 0.2s infinite !important; }
+        .weather-fog-effect { background-color: #455a64 !important; border: 2px solid #cfd8dc !important; }
+        .weather-rain-effect { background-color: rgba(20, 30, 50, 0.8) !important; border: 2px solid #5c6bc0 !important; }
+
+        .half-section { width: 100%; height: 50%; display: flex; flex-direction: column; align-items: center; padding-left: 280px; box-sizing: border-box; position: relative; }
+        .enemy-section { justify-content: flex-start; padding-top: 10px; }
+        .player-section { justify-content: flex-start; }
+        .h-hand-area { height: 110px; width: 100%; display: flex; justify-content: center; align-items: center; }
+        .row-container { display: flex; align-items: center; height: 75px; width: 850px; position: relative; margin: 2px 0; }
+        .h-70 { height: 100%; width: 750px; display: flex; align-items: center; padding-left: 10px; box-sizing: border-box; } 
+        .row-box { background-color: #263238; border-radius: 4px 0 0 4px; position: relative; display: flex; align-items: center; transition: background 0.2s; overflow: hidden; }
+        
+        .row-box.target-mode { background-color: rgba(0, 255, 255, 0.3); border: 2px dashed #00bcd4 !important; cursor: pointer; animation: blink-border 1s infinite alternate; }
+        .border-red { border: 2px solid #ff0000; }
+        .border-blue { border: 2px solid #0055ff; }
+        .row-label { width: 80px; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; border-radius: 0 4px 4px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); border-left: 2px solid rgba(255,255,255,0.5); }
+        .label-melee { background-color: #ffeb3b; color: #000; }
+        .label-ranged { background-color: #ff4081; color: #fff; }
+        .label-siege { background-color: #00bcd4; color: #fff; }
+        .row-score { width: 70px; height: 100%; background: transparent; border: none; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; color: #fff; text-shadow: 3px 3px 2px #000; z-index: 20; margin-right: 5px; margin-left: 10px; flex-shrink: 0; }
+        
+        .commander-slot { width: 50px; height: 70px; border: 2px dashed #888; border-radius: 4px; margin-right: 10px; background: rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; font-size: 1rem; color: #777; background-size: cover; flex-shrink: 0; transition: all 0.2s; }
+        
+        .commander-slot.target-mode { 
+            background-color: rgba(255, 235, 59, 0.4) !important; 
+            border: 3px solid #ffeb3b !important; 
+            cursor: pointer; 
+            box-shadow: 0 0 20px #ffeb3b; 
+            z-index: 50; 
+            animation: pulse-yellow 1s infinite;
+        }
+        @keyframes pulse-yellow { 0% { box-shadow: 0 0 10px #ffeb3b; } 50% { box-shadow: 0 0 25px #ffeb3b; transform: scale(1.1); } 100% { box-shadow: 0 0 10px #ffeb3b; } }
+
+        .card-slots-area { flex-grow: 1; height: 100%; display: flex; align-items: center; justify-content: flex-start; padding-left: 5px; overflow: visible; }
+        .hand-card { width: 63px; height: 93px; margin: 0 4px; border-radius: 4px; background-size: cover; background-position: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.2s; position: relative; background-color: #222; overflow: hidden; }
+        .hand-card:hover { transform: scale(2.0) translateY(-40px); z-index: 100; }
+        .hand-card.selected-decoy { border: 3px solid #00bcd4; transform: translateY(-20px); }
+        .enemy-back-card { background-color: #222 !important; border: 2px solid #5d4037 !important; background-image: repeating-linear-gradient(45deg, #3e2723, #3e2723 10px, #4e342e 10px, #4e342e 20px) !important; box-shadow: inset 0 0 10px #000 !important; }
+        .field-card { width: 48px; height: 68px; margin: 0 2px; background-size: cover; background-position: center; border-radius: 3px; cursor: pointer; position: relative; z-index: 10; transition: all 0.2s; background-color: #222; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #555; }
+        .field-card:hover { transform: scale(3.0); z-index: 999; box-shadow: 0 0 20px rgba(0,0,0,0.8); border: 1px solid #fff; }
+        .card-top-strip { position: absolute; top: 0; left: 0; width: 100%; height: 22%; z-index: 5; opacity: 1.0; display: flex; justify-content: center; align-items: center; color: #fff; text-shadow: 1px 1px 2px #000; box-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .strip-melee { background-color: #ffeb3b; color: #000 !important; text-shadow: none !important; }
+        .strip-ranged { background-color: #ff4081; }
+        .strip-siege { background-color: #00bcd4; }
+        .strip-special { background-color: rgba(0,0,0,0.7); }
+        .card-sub-strip { position: absolute; top: 22%; left: 0; width: 100%; height: 16%; background-color: rgba(0, 0, 0, 0.7); z-index: 4; display: flex; justify-content: center; align-items: center; font-family: 'Noto Serif KR', serif; font-size: 10px; color: #00bcd4; font-weight: bold; }
+        .field-card .card-top-strip { font-size: 14px; }
+        .field-card .card-sub-strip { font-size: 8px; height: 18%; }
+        .card-overlay { position: absolute; top:0; left:0; width:100%; height:100%; display: flex; flex-direction: column; pointer-events: none; z-index: 10; }
+        .ui-panel { position: absolute; width: 260px; background: rgba(0,0,0,0.7); color: #fff; padding: 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 5px; border: 1px solid #5d4037; transition: box-shadow 0.3s; align-items: center; z-index: 1000; }
+        .turn-active { box-shadow: 0 0 20px #ffeb3b; border-color: #ffeb3b; }
+        .panel-enemy { top: 15px; left: 15px; }
+        .panel-player { bottom: 15px; left: 15px; }
+        .info-header { width: 100%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
+        .player-name { font-size: 1.5rem; color: #fff; display: flex; align-items: center; font-weight: bold; }
+        .avatar-img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; margin-right: 10px; object-fit: cover; background: #333; box-shadow: 0 0 5px #fff; }
+        .win-count-display { color: #ffeb3b; font-weight: bold; font-size: 1.2rem; margin-left: 5px; text-shadow: 0 0 5px rgba(255, 235, 59, 0.5); border: 2px solid #ffeb3b; padding: 2px 8px; border-radius: 15px; background: rgba(0,0,0,0.6); display: inline-block; white-space: nowrap; }
+        .total-score { font-size: 3rem; color: #ffeb3b; font-weight: bold; text-shadow: 0 0 10px rgba(255, 235, 59, 0.5); }
+        .decks-container { display: flex; justify-content: center; gap: 10px; width: 100%; margin: 5px 0; }
+        .deck-wrapper { display: flex; flex-direction: column; align-items: center; }
+        .deck-label { font-size: 0.9rem; color: #aaa; margin-bottom: 2px; }
+        .deck-visual { position: relative; width: 60px; height: 90px; }
+        .deck-card { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #222; border: 1px solid #555; border-radius: 4px; box-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .dummy-deck .deck-card:nth-child(3) { background: repeating-linear-gradient(45deg, #2b1d19, #2b1d19 5px, #3e2723 5px, #3e2723 10px); display: flex; justify-content: center; align-items: center; color: #fff; font-size: 14px; font-weight: bold; }
+        .result-badge { background: #444; color: #fff; padding: 5px 20px; border-radius: 20px; font-weight: bold; font-size: 1.5rem; min-width: 60px; text-align: center; border: 1px solid #777; display: none; }
+        .result-win { background: #ffeb3b; color: #000; border-color: #fff; box-shadow: 0 0 10px #ffeb3b; }
+        .result-lose { background: #555; color: #aaa; }
+        #pass-btn { background: linear-gradient(#8e24aa, #4a148c); color: #fff; border: 1px solid #fff; padding: 5px 0; cursor: pointer; border-radius: 5px; font-size: 1.5rem; width: 100%; margin-top: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        #pass-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(0,0,0,0.4); }
+        .pass-msg { color: #ff4081; font-weight: bold; font-size: 2rem; border: 2px solid #ff4081; padding: 5px 20px; border-radius: 5px; display: none; width: 80%; text-align: center; text-shadow: 0 0 5px #ff4081; animation: pulse-red 1.5s infinite; }
+        @keyframes pulse-red { 0% { background-color: transparent; color: #ff4081; box-shadow: none; } 50% { background-color: #ff4081; color: #fff; box-shadow: 0 0 15px #ff4081; } 100% { background-color: transparent; color: #ff4081; box-shadow: none; } }
+        #fullscreen-btn { position: absolute; bottom: 30px; right: 30px; width: 80px; height: 80px; background: rgba(0,0,0,0.6); border: 4px solid #ffeb3b; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 40px; color: #ffeb3b; cursor: pointer; z-index: 9999; box-shadow: 0 0 20px rgba(255, 235, 59, 0.8); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 10px rgba(255, 235, 59, 0.3); transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(255, 235, 59, 0.8); transform: scale(1.05); } 100% { box-shadow: 0 0 10px rgba(255, 235, 59, 0.3); transform: scale(1); } }
+        #turn-message { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 30px; border-radius: 20px; font-size: 2rem; display: none; z-index: 2500; border: 2px solid #fff; }
+        #action-notification { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.85); color: #ffeb3b; padding: 15px 40px; border: 2px solid #ffeb3b; border-radius: 30px; font-size: 2.5rem; font-weight: bold; z-index: 5000; display: none; transition: opacity 0.5s; pointer-events: none; text-shadow: 0 0 10px #ffeb3b; box-shadow: 0 0 20px rgba(255, 235, 59, 0.5); white-space: nowrap; }
+        #graveyard-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 4000; }
+        #graveyard-title { color: #00bcd4; font-size: 3rem; margin-bottom: 20px; font-weight: bold; }
+        #graveyard-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 800px; }
+        #graveyard-grid .hand-card { transform: scale(1.2); margin: 10px; }
+        #sun-effect { position: absolute; top: -100px; right: -100px; width: 300px; height: 300px; background: radial-gradient(circle, #fff, #ffeb3b, transparent); border-radius: 50%; z-index: 5000; pointer-events: none; display: none; opacity: 0; }
+        .sun-active { display: block !important; animation: sun-flash-anim 1.5s ease-out forwards; }
+        @keyframes sun-flash-anim { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(2.0); } 100% { opacity: 0; transform: scale(1.5); } }
+        #scorch-effect { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 4500; pointer-events: none; display: none; background-image: radial-gradient(circle, transparent 40%, #ff4500 90%); }
+        .scorch-active { display: block !important; animation: burn-anim 1.5s ease-out forwards; }
+        @keyframes burn-anim { 0% { opacity: 0; } 20% { opacity: 0.8; background-color: rgba(255, 69, 0, 0.4); } 80% { opacity: 0.8; } 100% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <div id="game-container">
+        <div id="input-blocker"></div>
+        <div id="sun-effect"></div>
+        <div id="scorch-effect"></div>
+        <div id="weather-frost-layer" class="weather-overlay"></div>
+        <div id="weather-fog-layer" class="weather-overlay"></div>
+        <div id="weather-rain-layer" class="weather-overlay"></div>
+        
+        <div id="intro-overlay" class="overlay-screen">
+            <div id="char-selection-screen">
+                <div class="section-title">1. 나의 캐릭터 선택</div>
+                <div class="select-row" id="player-select-row">
+                    <div class="char-wrapper" onclick="selectPlayerChar(0, this)"><div class="char-card" style="background-image:url('hero_kkami.jpg')"></div><div class="char-name">까미</div></div>
+                    <div class="char-wrapper" onclick="selectPlayerChar(1, this)"><div class="char-card" style="background-image:url('hero_kimchi.jpg')"></div><div class="char-name">김치</div></div>
+                    <div class="char-wrapper" onclick="selectPlayerChar(2, this)"><div class="char-card" style="background-image:url('hero_yeolmu.jpg')"></div><div class="char-name">열무</div></div>
+                </div>
+                <div class="section-title">2. 적군 캐릭터 선택</div>
+                <div class="select-row" id="enemy-select-row">
+                    <div class="char-wrapper" onclick="selectEnemyChar(0, this)"><div class="char-card" style="background-image:url('enemy_hero_kimchi.JPG')"></div><div class="char-name">사탄</div></div>
+                    <div class="char-wrapper" onclick="selectEnemyChar(1, this)"><div class="char-card" style="background-image:url('enemy_hero_kkami.JPG')"></div><div class="char-name">아담</div></div>
+                    <div class="char-wrapper" onclick="selectEnemyChar(2, this)"><div class="char-card" style="background-image:url('enemy_hero_sangchu.JPG')"></div><div class="char-name">이브</div></div>
+                </div>
+                <div style="margin-top: 20px; color:#aaa; font-size: 1.2rem;">두 진영의 캐릭터를 모두 선택하세요.</div>
+            </div>
+            <div id="rps-battle-screen">
+                <div class="section-title" style="font-size:3.5rem; margin-bottom:40px;">누가 먼저 시작할까?</div>
+                <div class="battle-container">
+                    <div class="battle-avatar-wrapper"><img id="battle-player-img" class="battle-avatar" src="" alt="나"><div class="battle-name-display" id="battle-player-name">ME</div></div>
+                    <div class="vs-text">VS</div>
+                    <div class="battle-avatar-wrapper"><img id="battle-enemy-img" class="battle-avatar" src="" alt="적"><div class="battle-name-display" id="battle-enemy-name">ENEMY</div></div>
+                </div>
+                <div class="section-title" style="font-size:2rem; margin-bottom:20px;">가위바위보를 선택하세요</div>
+                <div class="rps-controls">
+                    <div class="rps-btn" onclick="playRPS('rock')">✊</div>
+                    <div class="rps-btn" onclick="playRPS('scissors')">✌️</div>
+                    <div class="rps-btn" onclick="playRPS('paper')">✋</div>
+                </div>
+                <div id="rps-result"></div>
+            </div>
+        </div>
+
+        <div id="action-notification"></div>
+        <div id="turn-message"></div>
+
+        <div class="half-section enemy-section">
+            <div class="h-hand-area" id="enemy-hand-area"></div>
+            <div class="row-container">
+                <div class="h-70 row-box border-red" id="row-enemy-siege">
+                    <div class="row-score" id="score-enemy-siege">0</div>
+                    <div class="commander-slot" id="cmd-enemy-siege">지휘</div>
+                    <div class="card-slots-area" id="slots-enemy-siege"></div>
+                </div>
+                <div class="row-label label-siege">탱크</div>
+            </div>
+            <div class="row-container">
+                <div class="h-70 row-box border-red" id="row-enemy-ranged">
+                    <div class="row-score" id="score-enemy-ranged">0</div>
+                    <div class="commander-slot" id="cmd-enemy-ranged">지휘</div>
+                    <div class="card-slots-area" id="slots-enemy-ranged"></div>
+                </div>
+                <div class="row-label label-ranged">활</div>
+            </div>
+            <div class="row-container">
+                <div class="h-70 row-box border-red" id="row-enemy-melee">
+                    <div class="row-score" id="score-enemy-melee">0</div>
+                    <div class="commander-slot" id="cmd-enemy-melee">지휘</div>
+                    <div class="card-slots-area" id="slots-enemy-melee"></div>
+                </div>
+                <div class="row-label label-melee">창</div>
+            </div>
+        </div>
+
+        <div class="half-section player-section">
+            <div class="row-container" style="margin-top:10px;">
+                <div class="h-70 row-box border-blue" id="row-player-melee">
+                    <div class="row-score" id="score-player-melee">0</div>
+                    <div class="commander-slot" id="cmd-player-melee" onclick="selectCommander('melee')">지휘</div>
+                    <div class="card-slots-area" id="slots-player-melee"></div>
+                </div>
+                <div class="row-label label-melee">창</div>
+            </div>
+            <div class="row-container">
+                <div class="h-70 row-box border-blue" id="row-player-ranged">
+                    <div class="row-score" id="score-player-ranged">0</div>
+                    <div class="commander-slot" id="cmd-player-ranged" onclick="selectCommander('ranged')">지휘</div>
+                    <div class="card-slots-area" id="slots-player-ranged"></div>
+                </div>
+                <div class="row-label label-ranged">활</div>
+            </div>
+            <div class="row-container">
+                <div class="h-70 row-box border-blue" id="row-player-siege">
+                    <div class="row-score" id="score-player-siege">0</div>
+                    <div class="commander-slot" id="cmd-player-siege" onclick="selectCommander('siege')">지휘</div>
+                    <div class="card-slots-area" id="slots-player-siege"></div>
+                </div>
+                <div class="row-label label-siege">탱크</div>
+            </div>
+            <div class="h-hand-area" id="player-hand-area"></div>
+        </div>
+
+        <div class="ui-panel panel-enemy" id="panel-enemy">
+            <div class="info-header">
+                <div class="player-name"><img id="enemy-avatar" class="avatar-img" src="" alt="E"><span id="enemy-name-text">적군</span><span class="win-count-display" id="enemy-win-count">0승</span></div>
+                <div class="total-score" id="enemy-total">0</div>
+            </div>
+            <div class="decks-container">
+                <div class="deck-wrapper"><div class="deck-label">덱</div><div class="deck-visual dummy-deck"><div class="deck-card"></div><div class="deck-card"></div><div class="deck-card" id="enemy-deck-top">29</div></div></div>
+                <div class="deck-wrapper"><div class="deck-label">무덤</div><div class="deck-visual graveyard-deck" id="enemy-graveyard-vis"><div class="deck-card"></div><div class="deck-card"></div><div class="deck-card" id="enemy-graveyard-top">0</div></div></div>
+            </div>
+            <div class="result-badge" id="enemy-result-badge">패배</div>
+            <div class="pass-msg" id="enemy-pass-msg">PASS</div>
+        </div>
+
+        <div class="ui-panel panel-player" id="panel-player">
+            <div class="info-header">
+                <div class="player-name"><img id="player-avatar" class="avatar-img" src="" alt="P"><span id="player-name-text">나</span><span class="win-count-display" id="player-win-count">0승</span></div>
+                <div class="total-score" id="player-total">0</div>
+            </div>
+            <div class="decks-container">
+                <div class="deck-wrapper"><div class="deck-label">덱</div><div class="deck-visual dummy-deck"><div class="deck-card"></div><div class="deck-card"></div><div class="deck-card" id="player-deck-top">29</div></div></div>
+                <div class="deck-wrapper"><div class="deck-label">무덤</div><div class="deck-visual graveyard-deck" id="player-graveyard-vis"><div class="deck-card"></div><div class="deck-card"></div><div class="deck-card" id="player-graveyard-top">0</div></div></div>
+            </div>
+            <div class="result-badge" id="player-result-badge">승리</div>
+            <div class="pass-msg" id="player-pass-msg">PASS</div>
+            <button id="pass-btn">라운드 패스</button>
+        </div>
+
+        <div id="graveyard-overlay">
+            <div id="graveyard-title">부활시킬 아군 카드를 선택하세요</div>
+            <div id="graveyard-grid"></div>
+            <button onclick="closeGraveyard()" style="margin-top:20px; padding:10px 20px; background:#555; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size:1.2rem;">취소</button>
+        </div>
+
+        <div id="msg-overlay">
+            <div id="msg-text"></div>
+            <button onclick="nextRoundOrRestart()" id="next-btn" style="font-size:2rem; margin-top:20px; padding:10px 30px; cursor:pointer;">다음 라운드</button>
+        </div>
+
+        <div id="fullscreen-btn" onclick="toggleFullScreen()">⛶</div>
+    </div>
+</div>
+
+<script>
+    function resizeGame() {
+        const container = document.getElementById('game-container');
+        const targetW = 1500; const targetH = 720;
+        const winW = window.innerWidth; const winH = window.innerHeight;
+        const scale = Math.min(winW / targetW, winH / targetH);
+        container.style.transform = `scale(${scale})`;
+    }
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); } 
+        else { if (document.exitFullscreen) document.exitFullscreen(); }
+    }
+    window.addEventListener('resize', resizeGame);
+    window.addEventListener('orientationchange', () => { setTimeout(resizeGame, 200); });
+    window.onload = resizeGame;
+
+    const playerChars = ['hero_kkami.jpg', 'hero_kimchi.jpg', 'hero_yeolmu.jpg'];
+    const playerNames = ['까미', '김치', '열무'];
+    const enemyChars = ['enemy_hero_kimchi.JPG', 'enemy_hero_kkami.JPG', 'enemy_hero_sangchu.JPG'];
+    
+    // [변경: 적군 캐릭터 이름 사탄, 아담, 이브로 교체]
+    const enemyNames = ['사탄', '아담', '이브'];
+    
+    let selectedPlayerImg = null; let selectedPlayerName = "";
+    let selectedEnemyImg = null; let selectedEnemyName = "";
+    let firstTurn = 'player';
+
+    function selectPlayerChar(idx, el) {
+        selectedPlayerImg = playerChars[idx]; selectedPlayerName = playerNames[idx];
+        document.querySelectorAll('#player-select-row .char-wrapper').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected'); checkSelections();
+    }
+    function selectEnemyChar(idx, el) {
+        selectedEnemyImg = enemyChars[idx]; selectedEnemyName = enemyNames[idx];
+        document.querySelectorAll('#enemy-select-row .char-wrapper').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected'); checkSelections();
+    }
+    function checkSelections() {
+        if (selectedPlayerImg && selectedEnemyImg) {
+            setTimeout(() => {
+                document.getElementById('char-selection-screen').style.display = 'none';
+                document.getElementById('battle-player-img').src = selectedPlayerImg;
+                document.getElementById('battle-player-name').innerText = selectedPlayerName;
+                document.getElementById('battle-enemy-img').src = selectedEnemyImg;
+                document.getElementById('battle-enemy-name').innerText = selectedEnemyName;
+                document.getElementById('rps-battle-screen').style.display = 'flex';
+            }, 500);
+        }
+    }
+    function playRPS(userChoice) {
+        if(document.getElementById('rps-result').innerText !== "") return;
+        const choices = ['rock', 'scissors', 'paper'];
+        const aiChoice = choices[Math.floor(Math.random() * 3)];
+        let resultMsg = ""; let draw = false; const map = { 'rock':'바위', 'scissors':'가위', 'paper':'보' };
+
+        if (userChoice === aiChoice) {
+            resultMsg = `나(${map[userChoice]}) vs 적(${map[aiChoice]}) - 비겼습니다! 다시!`; draw = true;
+        } else if (
+            (userChoice === 'rock' && aiChoice === 'scissors') ||
+            (userChoice === 'scissors' && aiChoice === 'paper') ||
+            (userChoice === 'paper' && aiChoice === 'rock')
+        ) {
+            resultMsg = `승리! ${selectedPlayerName} 선공`; firstTurn = 'player';
+        } else {
+            resultMsg = `패배! ${selectedEnemyName} 선공`; firstTurn = 'enemy';
+        }
+
+        document.getElementById('rps-result').innerText = resultMsg;
+
+        if (draw) { setTimeout(() => { document.getElementById('rps-result').innerText = ""; }, 1000); } 
+        else {
+            document.getElementById('player-avatar').src = selectedPlayerImg;
+            document.getElementById('player-name-text').innerText = selectedPlayerName;
+            document.getElementById('enemy-avatar').src = selectedEnemyImg;
+            document.getElementById('enemy-name-text').innerText = selectedEnemyName;
+            setTimeout(() => { document.getElementById('intro-overlay').style.display = 'none'; startGameWithSettings(); }, 1500);
+        }
+    }
+
+    const TYPE_NAME_MAP = { melee: '창', ranged: '활', siege: '탱크', scorch: '소치', decoy: '미끼', spy: '스파이', horn: '뿔피리', medic: '간호사', bond: '유대', boost: '사기진작', weather: '날씨', hero: '영웅', normal: '부대' };
+    function getCardDefinitions() {
+        return [
+            { id: 'h1', name: '상추', type: 'melee', score: 15, ability: 'hero', img: 'hero_sangchu.jpg' },
+            { id: 'h2', name: '배추', type: 'siege', score: 15, ability: 'hero', img: 'hero_baechu.jpg' },
+            { id: 'h3', name: '열무', type: 'melee', score: 15, ability: 'hero', img: 'hero_yeolmu.jpg' },
+            { id: 'h4', name: '김치', type: 'ranged', score: 15, ability: 'hero', img: 'hero_kimchi.jpg' },
+            { id: 'h5', name: '까미', type: 'ranged', score: 15, ability: 'hero', img: 'hero_kkami.jpg' },
+            { id: 'm1', name: '상추병사', type: 'melee', score: 8, ability: 'normal', img: 'unit_sangchu_normal_1.jpg' },
+            { id: 'm2', name: '상추병사', type: 'melee', score: 8, ability: 'normal', img: 'unit_sangchu_normal_2.jpg' },
+            { id: 'm3', name: '상추병사', type: 'melee', score: 8, ability: 'normal', img: 'unit_sangchu_normal_3.jpg' },
+            { id: 'm4', name: '상추사기', type: 'melee', score: 6, ability: 'boost', img: 'unit_sangchu_boost_1.jpg' },
+            { id: 'm5', name: '상추사기', type: 'melee', score: 6, ability: 'boost', img: 'unit_sangchu_boost_2.jpg' },
+            { id: 'm6', name: '열무유대', type: 'melee', score: 4, ability: 'bond', img: 'unit_yeolmu_bond_1.jpg' },
+            { id: 'm7', name: '열무유대', type: 'melee', score: 4, ability: 'bond', img: 'unit_yeolmu_bond_2.jpg' },
+            { id: 'm8', name: '열무유대', type: 'melee', score: 4, ability: 'bond', img: 'unit_yeolmu_bond_3.jpg' },
+            { id: 'm9', name: '열무병사', type: 'melee', score: 5, ability: 'normal', img: 'unit_yeolmu_normal_1.jpg' },
+            { id: 'm10', name: '열무병사', type: 'melee', score: 5, ability: 'normal', img: 'unit_yeolmu_normal_2.jpg' },
+            { id: 'r1', name: '김치병사', type: 'ranged', score: 6, ability: 'normal', img: 'unit_kimchi_normal_1.jpg' },
+            { id: 'r2', name: '김치병사', type: 'ranged', score: 6, ability: 'normal', img: 'unit_kimchi_normal_2.jpg' },
+            { id: 'r3', name: '김치병사', type: 'ranged', score: 6, ability: 'normal', img: 'unit_kimchi_normal_3.jpg' },
+            { id: 'r4', name: '김치유대', type: 'ranged', score: 3, ability: 'bond', img: 'unit_kimchi_bond_1.jpg' },
+            { id: 'r5', name: '김치유대', type: 'ranged', score: 3, ability: 'bond', img: 'unit_kimchi_bond_2.jpg' },
+            { id: 'r6', name: '김치유대', type: 'ranged', score: 3, ability: 'bond', img: 'unit_kimchi_bond_3.jpg' },
+            { id: 'r7', name: '까미스파이', type: 'ranged', score: 1, ability: 'spy', img: 'unit_kkami_spy_1.jpg' },
+            { id: 'r8', name: '까미스파이', type: 'ranged', score: 1, ability: 'spy', img: 'unit_kkami_spy_2.jpg' },
+            { id: 's1', name: '배추공성', type: 'siege', score: 10, ability: 'normal', img: 'unit_baechu_normal_1.jpg' },
+            { id: 's2', name: '배추공성', type: 'siege', score: 10, ability: 'normal', img: 'unit_baechu_normal_2.jpg' },
+            { id: 's3', name: '배추공성', type: 'siege', score: 10, ability: 'normal', img: 'unit_baechu_normal_3.jpg' },
+            { id: 's4', name: '배추의무', type: 'siege', score: 5, ability: 'medic', img: 'unit_baechu_medic_1.jpg' },
+            { id: 's5', name: '배추의무', type: 'siege', score: 5, ability: 'medic', img: 'unit_baechu_medic_2.jpg' },
+            { id: 's6', name: '배추의무', type: 'siege', score: 5, ability: 'medic', img: 'unit_baechu_medic_3.jpg' },
+            { id: 'sp1', name: '뿔피리', type: 'special', score: 0, ability: 'horn', img: 'special_horn_1.jpg' },
+            { id: 'sp2', name: '뿔피리', type: 'special', score: 0, ability: 'horn', img: 'special_horn_2.jpg' },
+            { id: 'sp3', name: '소치', type: 'special', score: 0, ability: 'scorch', img: 'special_scorch_1.jpg' },
+            { id: 'sp4', name: '소치', type: 'special', score: 0, ability: 'scorch', img: 'special_scorch_2.jpg' },
+            { id: 'sp5', name: '미끼', type: 'special', score: 0, ability: 'decoy', img: 'special_decoy_1.jpg' },
+            { id: 'sp6', name: '미끼', type: 'special', score: 0, ability: 'decoy', img: 'special_decoy_2.jpg' },
+            { id: 'w1', name: '추위', type: 'weather', score: 0, ability: 'weather_frost', img: 'weather_frost.jpg' },
+            { id: 'w2', name: '안개', type: 'weather', score: 0, ability: 'weather_fog', img: 'weather_fog.jpg' },
+            { id: 'w3', name: '폭우', type: 'weather', score: 0, ability: 'weather_rain', img: 'weather_rain.jpg' },
+            { id: 'w4', name: '맑음', type: 'weather', score: 0, ability: 'weather_clear', img: 'weather_clear.jpg' }
+        ];
+    }
+
+    let gameState = {
+        turn: 'player', playerWins: 0, enemyWins: 0, playerPassed: false, enemyPassed: false,
+        playerDeck: [], enemyDeck: [], playerHand: [], enemyHand: [], playerGraveyard: [], enemyGraveyard: [],
+        playerField: { melee:[], ranged:[], siege:[] }, enemyField: { melee:[], ranged:[], siege:[] },
+        isSelectingRow: false, selectedRowIndex: 0, pendingCardIdx: null, isUsingDecoy: false,
+        lastWinner: 'player', commanders: { player: {melee:false,ranged:false,siege:false}, enemy: {melee:false,ranged:false,siege:false} },
+        weather: { frost: false, fog: false, rain: false } 
+    };
+    let aiTimer = null; 
+    const ROW_IDS = ['row-player-melee', 'row-player-ranged', 'row-player-siege'];
+    const TYPE_KEYS = ['melee', 'ranged', 'siege'];
+    const sounds = {
+        shuffle: new Audio('card_shuffle.mp3'), draw: new Audio('card_draw.mp3'), place: new Audio('card_place.mp3'), hover: new Audio('card_hover.mp3'),
+        medic: new Audio('skill_medic.mp3'), scorch: new Audio('skill_scorch.mp3'), decoy: new Audio('skill_decoy.mp3'), horn: new Audio('skill_horn.mp3'),
+        win: new Audio('you_win.mp3'), defeat: new Audio('defeat_sad.mp3'), pass: new Audio('round_pass.mp3'),
+        ice: new Audio('skill_ice.mp3'), fog: new Audio('skill_fog.mp3'), rain: new Audio('skill_rain.mp3'), sun: new Audio('skill_sun.mp3')
+    };
+
+    function init() {
+        gameState.playerDeck = generateFullDeck(false); gameState.enemyDeck = generateFullDeck(true);
+        for(let i=0; i<10; i++) { drawCard('player', 1, false); drawCard('enemy', 1, false); }
+        updateDeckUI(); renderHand(); renderEnemyHand(); renderField(); 
+    }
+    function startGameWithSettings() { try { sounds.shuffle.play(); } catch(e){} setTurn(firstTurn); gameState.lastWinner = firstTurn; }
+
+    function setTurn(who) {
+        if(gameState.playerPassed && gameState.enemyPassed) return;
+        
+        let myHand = (who === 'player') ? gameState.playerHand : gameState.enemyHand;
+        let alreadyPassed = (who === 'player') ? gameState.playerPassed : gameState.enemyPassed;
+        
+        // [수정: 카드 소진 강제 패스]
+        if (myHand.length === 0 && !alreadyPassed) {
+            console.log(`[System] ${who} has 0 cards. Force Pass.`);
+            passRound(who);
+            return; 
+        }
+
+        gameState.turn = who;
+        const blocker = document.getElementById('input-blocker');
+        const pPanel = document.getElementById('panel-player');
+        const ePanel = document.getElementById('panel-enemy');
+
+        if(who === 'player') {
+            if(gameState.playerPassed) { setTurn('enemy'); return; }
+            blocker.style.display = 'none'; 
+            pPanel.classList.add('turn-active'); ePanel.classList.remove('turn-active');
+        } else {
+            if(gameState.enemyPassed) { setTurn('player'); return; }
+            blocker.style.display = 'block'; 
+            ePanel.classList.add('turn-active'); pPanel.classList.remove('turn-active');
+            clearTimeout(aiTimer); aiTimer = setTimeout(enemyAI, 1000);
+        }
+    }
+
+    function switchTurn() {
+        if(gameState.turn === 'enemy') { if(gameState.playerPassed) setTurn('enemy'); else setTurn('player'); } 
+        else if(gameState.turn === 'player') { if(gameState.enemyPassed) setTurn('player'); else setTurn('enemy'); }
+    }
+    function generateFullDeck(isEnemy) {
+        let definitions = getCardDefinitions(); let deck = [];
+        definitions.forEach(def => { let card = { ...def }; if(isEnemy) card.img = 'enemy_' + def.img; deck.push(card); });
+        deck.sort(() => Math.random() - 0.5); return deck;
+    }
+    function drawCard(who, count, playSound=true) {
+        let deck = (who === 'player') ? gameState.playerDeck : gameState.enemyDeck;
+        let hand = (who === 'player') ? gameState.playerHand : gameState.enemyHand;
+        for(let i=0; i<count; i++) { if(deck.length > 0) hand.push(deck.pop()); }
+        if(playSound) try{ sounds.draw.play(); }catch(e){}
+    }
+    function buildCardVisuals(el, card) {
+        const topStrip = document.createElement('div'); topStrip.className = 'card-top-strip';
+        let topText = "";
+        if (card.type === 'special' || card.type === 'weather') { topStrip.classList.add('strip-special'); topText = TYPE_NAME_MAP[card.ability] || card.name; } 
+        else {
+            if(card.type === 'melee') topStrip.classList.add('strip-melee');
+            else if(card.type === 'ranged') topStrip.classList.add('strip-ranged');
+            else if(card.type === 'siege') topStrip.classList.add('strip-siege');
+            if (card.ability === 'hero') { topText = "영웅(15)"; topStrip.style.fontSize = "11px"; } else { topText = card.score; topStrip.style.fontSize = "16px"; }
+        }
+        topStrip.innerText = topText; el.appendChild(topStrip);
+        const specialAbilities = ['medic', 'spy', 'bond', 'boost'];
+        if (specialAbilities.includes(card.ability)) { const subStrip = document.createElement('div'); subStrip.className = 'card-sub-strip'; subStrip.innerText = TYPE_NAME_MAP[card.ability]; el.appendChild(subStrip); }
+    }
+    function createCardElement(card, isEnemyHand) {
+        const el = document.createElement('div');
+        if (isEnemyHand) { el.className = 'hand-card enemy-back-card'; return el; }
+        el.style.backgroundImage = `url('${card.img}')`; el.className = 'hand-card'; 
+        buildCardVisuals(el, card);
+        el.onmouseenter = () => { try { sounds.hover.currentTime = 0; sounds.hover.play(); } catch(e){} };
+        const overlay = document.createElement('div'); overlay.className = 'card-overlay hand-overlay'; el.appendChild(overlay); return el;
+    }
+
+    function renderHand() {
+        const area = document.getElementById('player-hand-area'); area.innerHTML = '';
+        gameState.playerHand.forEach((card, idx) => {
+            const el = createCardElement(card, false); el.onclick = () => onCardClick(idx);
+            if((gameState.isUsingDecoy || gameState.isSelectingRow) && idx === gameState.pendingCardIdx) { el.classList.add('selected-decoy'); }
+            area.appendChild(el);
+        });
+    }
+    function renderEnemyHand() {
+        const area = document.getElementById('enemy-hand-area'); area.innerHTML = '';
+        gameState.enemyHand.forEach(() => { area.appendChild(createCardElement(null, true)); });
+    }
+    function renderField() {
+        ['melee', 'ranged', 'siege'].forEach(type => {
+            const slot = document.getElementById(`slots-player-${type}`); slot.innerHTML = '';
+            const container = document.getElementById(`row-player-${type}`); container.className = 'h-70 row-box border-blue'; 
+            
+            const cmdSlot = document.getElementById(`cmd-player-${type}`); 
+            cmdSlot.classList.remove('target-mode'); 
+            
+            if(gameState.isUsingDecoy) container.classList.add('target-mode');
+            if(gameState.isSelectingRow) cmdSlot.classList.add('target-mode'); // 클래스 추가
+            
+            if(type==='melee' && gameState.weather.frost) container.classList.add('weather-frost-effect');
+            if(type==='ranged' && gameState.weather.fog) container.classList.add('weather-fog-effect');
+            if(type==='siege' && gameState.weather.rain) container.classList.add('weather-rain-effect');
+            gameState.playerField[type].forEach((card, idx) => {
+                const el = document.createElement('div'); el.className = 'field-card'; el.style.backgroundImage = `url('${card.img}')`;
+                buildCardVisuals(el, card); el.onmouseenter = () => { try { sounds.hover.currentTime = 0; sounds.hover.play(); } catch(e){} };
+                const overlay = document.createElement('div'); overlay.className = 'field-overlay';
+                overlay.innerHTML = `<div style="color:#fff; font-size:10px;">${card.score}</div>`; el.appendChild(overlay);
+                el.onclick = (e) => { e.stopPropagation(); onFieldCardClick('player', type, idx); };
+                slot.appendChild(el);
+            });
+        });
+        ['melee', 'ranged', 'siege'].forEach(type => {
+            const slot = document.getElementById(`slots-enemy-${type}`); slot.innerHTML = '';
+            const container = document.getElementById(`row-enemy-${type}`); container.className = 'h-70 row-box border-red'; 
+            if(type==='melee' && gameState.weather.frost) container.classList.add('weather-frost-effect');
+            if(type==='ranged' && gameState.weather.fog) container.classList.add('weather-fog-effect');
+            if(type==='siege' && gameState.weather.rain) container.classList.add('weather-rain-effect');
+            gameState.enemyField[type].forEach(card => {
+                const el = document.createElement('div'); el.className = 'field-card'; el.style.backgroundImage = `url('${card.img}')`;
+                buildCardVisuals(el, card); el.onmouseenter = () => { try { sounds.hover.currentTime = 0; sounds.hover.play(); } catch(e){} };
+                const overlay = document.createElement('div'); overlay.className = 'field-overlay';
+                overlay.innerHTML = `<div style="color:#fff; font-size:10px;">${card.score}</div>`; el.appendChild(overlay);
+                slot.appendChild(el);
+            });
+        });
+    }
+    function updateDeckUI() {
+        document.getElementById('player-deck-top').innerText = gameState.playerDeck.length;
+        document.getElementById('enemy-deck-top').innerText = gameState.enemyDeck.length;
+        document.getElementById('player-graveyard-top').innerText = gameState.playerGraveyard.length;
+        document.getElementById('enemy-graveyard-top').innerText = gameState.enemyGraveyard.length;
+        if(gameState.playerGraveyard.length > 0) { const top = gameState.playerGraveyard[gameState.playerGraveyard.length-1]; document.getElementById('player-graveyard-top').style.backgroundImage = `url('${top.img}')`; } 
+        else { document.getElementById('player-graveyard-top').style.backgroundImage = 'none'; }
+        if(gameState.enemyGraveyard.length > 0) { const top = gameState.enemyGraveyard[gameState.enemyGraveyard.length-1]; document.getElementById('enemy-graveyard-top').style.backgroundImage = `url('${top.img}')`; } 
+        else { document.getElementById('enemy-graveyard-top').style.backgroundImage = 'none'; }
+    }
+
+    function onCardClick(idx) {
+        if(gameState.turn !== 'player') return; 
+        if(gameState.playerPassed) return; 
+        if(gameState.isUsingDecoy || gameState.isSelectingRow) {
+            gameState.isUsingDecoy = false; gameState.isSelectingRow = false; gameState.pendingCardIdx = null;
+            renderHand(); renderField(); document.getElementById('turn-message').style.display = 'none'; return;
+        }
+        const card = gameState.playerHand[idx];
+        if(card.ability === 'horn') {
+            gameState.isSelectingRow = true; gameState.pendingCardIdx = idx;
+            renderHand(); renderField(); 
+            const msg = document.getElementById('turn-message'); msg.innerText = "지휘관을 배치할 라인(지휘관 슬롯)을 선택하세요"; msg.style.display = 'block'; return;
+        }
+        if(card.ability === 'decoy') {
+            gameState.isUsingDecoy = true; gameState.pendingCardIdx = idx;
+            renderHand(); renderField(); 
+            const msg = document.getElementById('turn-message'); msg.innerText = "회수할 아군 카드를 선택하세요"; msg.style.display = 'block'; return;
+        }
+        playCard('player', idx);
+    }
+    function onFieldCardClick(side, type, idx) {
+        if(gameState.turn !== 'player') return; if(!gameState.isUsingDecoy) return; if(side !== 'player') return;
+        
+        // [New Logic] Decoy cannot pick up Spies
+        const targetCard = gameState.playerField[type][idx];
+        if (targetCard.ability === 'spy') {
+            showActionNotification("스파이는 회수할 수 없습니다!");
+            return;
+        }
+
+        const decoyCard = gameState.playerHand[gameState.pendingCardIdx];
+        gameState.playerHand.push(targetCard); gameState.playerField[type][idx] = decoyCard; gameState.playerHand.splice(gameState.pendingCardIdx, 1);
+        gameState.isUsingDecoy = false; gameState.pendingCardIdx = null;
+        document.getElementById('turn-message').style.display = 'none';
+        try{ sounds.decoy.play(); }catch(e){}
+        renderHand(); renderField(); calcScore(); switchTurn();
+    }
+    function selectCommander(rowType) {
+        if(!gameState.isSelectingRow) return;
+        const typeMap = { 'melee': 0, 'ranged': 1, 'siege': 2 }; gameState.selectedRowIndex = typeMap[rowType];
+        confirmSpecialPlacement();
+    }
+    function confirmSpecialPlacement() {
+        document.getElementById('turn-message').style.display = 'none';
+        ROW_IDS.forEach(id => document.getElementById(id).classList.remove('highlight'));
+        gameState.isSelectingRow = false;
+        const card = gameState.playerHand[gameState.pendingCardIdx]; gameState.playerHand.splice(gameState.pendingCardIdx, 1);
+        renderHand();
+        const type = TYPE_KEYS[gameState.selectedRowIndex];
+        const slotId = `cmd-player-${type}`; gameState.commanders.player[type] = true;
+        const slot = document.getElementById(slotId);
+        slot.innerHTML = ''; slot.style.backgroundImage = `url('${card.img}')`; slot.style.backgroundSize = 'cover';
+        try{ sounds.horn.play(); }catch(e){}
+        renderField(); calcScore(); switchTurn(); 
+    }
+    function showActionNotification(text) {
+        const el = document.getElementById('action-notification'); el.innerText = text; el.style.display = 'block'; el.style.opacity = '1';
+        setTimeout(() => { el.style.opacity = '0'; setTimeout(() => { el.style.display = 'none'; }, 500); }, 2000); 
+    }
+
+    function playCard(who, idx) {
+        let hand = (who==='player') ? gameState.playerHand : gameState.enemyHand;
+        let card = hand[idx];
+
+        if (who === 'enemy') {
+            let notifText = "";
+            if(card.ability === 'horn') notifText = "뿔피리"; else if(card.ability === 'scorch') notifText = "소치";
+            else if(card.ability === 'decoy') notifText = "미끼"; else if(card.ability === 'spy') notifText = "스파이";
+            else if(card.ability === 'medic') notifText = "간호사"; else if(card.ability === 'bond') notifText = "유대";
+            else if(card.ability === 'boost') notifText = "사기진작"; else if(card.type === 'weather') notifText = "날씨카드";
+            else if(card.type === 'melee') notifText = "창"; else if(card.type === 'ranged') notifText = "활"; else if(card.type === 'siege') notifText = "탱크";
+            else notifText = "카드";
+            showActionNotification(`적군이 [${notifText}]를 냈습니다!`);
+        }
+        hand.splice(idx, 1);
+
+        let soundToPlay = sounds.place;
+        if(card.ability === 'medic') soundToPlay = sounds.medic; else if(card.ability === 'scorch') soundToPlay = sounds.scorch;
+        else if(card.ability === 'horn') soundToPlay = sounds.horn; else if(card.ability === 'decoy') soundToPlay = sounds.decoy;
+        try{ soundToPlay.play(); }catch(e){}
+
+        if(card.type === 'weather') {
+            if(card.ability === 'weather_frost') { gameState.weather.frost = true; try{sounds.ice.play();}catch(e){} }
+            else if(card.ability === 'weather_fog') { gameState.weather.fog = true; try{sounds.fog.play();}catch(e){} }
+            else if(card.ability === 'weather_rain') { gameState.weather.rain = true; try{sounds.rain.play();}catch(e){} }
+            else if(card.ability === 'weather_clear') {
+                gameState.weather.frost = false; gameState.weather.fog = false; gameState.weather.rain = false;
+                const sun = document.getElementById('sun-effect'); sun.classList.remove('sun-active'); void sun.offsetWidth; sun.classList.add('sun-active'); try{sounds.sun.play();}catch(e){}
+            }
+            let gy = (who==='player') ? gameState.playerGraveyard : gameState.enemyGraveyard; gy.push(card);
+        }
+        else if (card.ability === 'horn') {
+            if (who === 'enemy') {
+                let bestRow = 'melee'; let maxPotential = -1;
+                ['melee', 'ranged', 'siege'].forEach(t => {
+                    if(!gameState.commanders.enemy[t]) {
+                        let currentScore = 0; gameState.enemyField[t].forEach(c => { if(c.ability!=='hero') currentScore += c.score; });
+                        let handCount = gameState.enemyHand.filter(c => c.type === t).length; let potential = currentScore + (handCount * 5); 
+                        if(potential > maxPotential) { maxPotential = potential; bestRow = t; }
+                    }
+                });
+                if(gameState.commanders.enemy[bestRow]) { gameState.enemyGraveyard.push(card); } 
+                else {
+                    gameState.commanders.enemy[bestRow] = true;
+                    const slotId = `cmd-enemy-${bestRow}`; const slot = document.getElementById(slotId);
+                    if(slot) { slot.innerHTML = ''; slot.style.backgroundImage = `url('${card.img}')`; slot.style.backgroundSize = 'cover'; try{ sounds.horn.play(); }catch(e){} }
+                }
+            } 
+        }
+        else if (card.ability === 'decoy') { if (who === 'enemy') gameState.enemyGraveyard.push(card); }
+        else if (card.ability === 'scorch') {
+            const scorch = document.getElementById('scorch-effect'); scorch.classList.remove('scorch-active'); void scorch.offsetWidth; scorch.classList.add('scorch-active');
+            
+            // [소치 수정] 상대방 필드만 타겟팅
+            let targetSide = (who === 'player') ? 'enemy' : 'player';
+            let maxScore = 0;
+            const getEffectiveScore = (c, type) => {
+                if (c.ability === 'hero') return c.score; let isWeather = false;
+                if (type === 'melee' && gameState.weather.frost) isWeather = true; if (type === 'ranged' && gameState.weather.fog) isWeather = true; if (type === 'siege' && gameState.weather.rain) isWeather = true;
+                return isWeather ? 1 : c.score;
+            };
+            let field = (targetSide === 'player') ? gameState.playerField : gameState.enemyField;
+            ['melee', 'ranged', 'siege'].forEach(type => {
+                field[type].forEach(c => {
+                    if(c.ability !== 'hero') { let score = getEffectiveScore(c, type); if(score > maxScore) maxScore = score; }
+                });
+            });
+            if (maxScore > 0) {
+                let graveyard = (targetSide === 'player') ? gameState.playerGraveyard : gameState.enemyGraveyard;
+                ['melee', 'ranged', 'siege'].forEach(type => {
+                    for(let i=field[type].length-1; i>=0; i--) {
+                        let c = field[type][i]; 
+                        if(c.ability !== 'hero' && getEffectiveScore(c, type) === maxScore) { 
+                            graveyard.push(c); field[type].splice(i, 1); 
+                        }
+                    }
+                });
+            }
+            let gy = (who==='player') ? gameState.playerGraveyard : gameState.enemyGraveyard; gy.push(card);
+        }
+        else if (card.ability === 'medic') {
+            let field = (who === 'player') ? gameState.playerField : gameState.enemyField; if(field[card.type]) field[card.type].push(card);
+            updateDeckUI(); renderHand(); renderEnemyHand(); renderField(); calcScore();
+            let gy = (who==='player') ? gameState.playerGraveyard : gameState.enemyGraveyard;
+            let revivables = [];
+            gy.forEach((c, idx) => {
+                let isMyCard = false; if(who === 'player') isMyCard = (c.img.indexOf('enemy_') === -1); else isMyCard = (c.img.indexOf('enemy_') !== -1);
+                if (isMyCard && ['melee', 'ranged', 'siege'].includes(c.type)) { revivables.push({card: c, index: idx}); }
+            });
+            if(revivables.length > 0) {
+                if(who === 'player') { showGraveyardSelection(revivables); return; } 
+                else {
+                    let randomTarget = revivables[Math.floor(Math.random() * revivables.length)]; let revived = gy[randomTarget.index]; gy.splice(randomTarget.index, 1);
+                    let rField = gameState.enemyField; rField[revived.type].push(revived); updateDeckUI(); renderField(); calcScore();
+                }
+            } else {
+                if(who === 'player') {
+                    const msg = document.getElementById('turn-message'); msg.innerText = "부활할 수 있는 아군 부대 카드가 없습니다"; msg.style.display = 'block';
+                    setTimeout(() => { msg.style.display = 'none'; switchTurn(); }, 1500); return;
+                }
+            }
+        }
+        else if (card.ability === 'spy') {
+            let targetSide = (who === 'player') ? 'enemy' : 'player'; drawCard(who, 2, true);
+            let field = (targetSide === 'player') ? gameState.playerField : gameState.enemyField; if(field[card.type]) field[card.type].push(card);
+        }
+        else {
+            let targetSide = who; let field = (targetSide === 'player') ? gameState.playerField : gameState.enemyField;
+            if (field[card.type]) field[card.type].push(card); else { let gy = (targetSide === 'player') ? gameState.playerGraveyard : gameState.enemyGraveyard; gy.push(card); }
+        }
+        updateDeckUI(); renderHand(); renderEnemyHand(); renderField(); calcScore();
+        if (hand.length === 0) { setTimeout(() => passRound(who), 300); return; }
+        switchTurn(); 
+    }
+    function showGraveyardSelection(revivables) {
+        const overlay = document.getElementById('graveyard-overlay'); const grid = document.getElementById('graveyard-grid'); grid.innerHTML = '';
+        revivables.forEach((item) => {
+            const card = item.card; const el = document.createElement('div'); el.className = 'hand-card'; el.style.backgroundImage = `url('${card.img}')`;
+            buildCardVisuals(el, card); el.onmouseenter = () => { try{ sounds.hover.currentTime=0; sounds.hover.play(); }catch(e){} };
+            el.onclick = () => onGraveyardSelect(item.index); grid.appendChild(el);
+        });
+        overlay.style.display = 'flex';
+    }
+    function closeGraveyard() { document.getElementById('graveyard-overlay').style.display = 'none'; switchTurn(); }
+    function onGraveyardSelect(gyIdx) {
+        document.getElementById('graveyard-overlay').style.display = 'none'; let revivedCard = gameState.playerGraveyard[gyIdx]; gameState.playerGraveyard.splice(gyIdx, 1);
+        gameState.playerField[revivedCard.type].push(revivedCard); try{ sounds.place.play(); }catch(e){}
+        updateDeckUI(); renderField(); calcScore(); switchTurn(); 
+    }
+    function calcScore() {
+        ['player', 'enemy'].forEach(side => {
+            let total = 0; let field = (side==='player') ? gameState.playerField : gameState.enemyField;
+            ['melee', 'ranged', 'siege'].forEach(type => {
+                let rowCards = field[type]; let rowDiv = document.getElementById(`slots-${side}-${type}`); let cardDivs = rowDiv.children;
+                let isWeather = false; if (type === 'melee' && gameState.weather.frost) isWeather = true; if (type === 'ranged' && gameState.weather.fog) isWeather = true; if (type === 'siege' && gameState.weather.rain) isWeather = true;
+                let finalScores = [];
+                if (isWeather) { finalScores = rowCards.map(c => (c.ability === 'hero') ? c.score : 1); } 
+                else {
+                    finalScores = rowCards.map(c => c.score);
+                    let bondBonuses = new Array(rowCards.length).fill(0);
+                    rowCards.forEach((c, i) => { if (c.ability === 'bond' && i > 0 && rowCards[i-1].ability !== 'hero') { bondBonuses[i-1] += 1; bondBonuses[i] += 1; } });
+                    for(let k=0; k<finalScores.length; k++) finalScores[k] += bondBonuses[k];
+                    let boostMults = new Array(rowCards.length).fill(1);
+                    rowCards.forEach((c, i) => { if (c.ability === 'boost' && i > 0 && rowCards[i-1].ability !== 'hero') { boostMults[i-1] *= 2; } });
+                    for(let k=0; k<finalScores.length; k++) finalScores[k] *= boostMults[k];
+                    if (gameState.commanders[side][type] || rowCards.some(c => c.ability === 'horn')) { for(let k=0; k<finalScores.length; k++) { if(rowCards[k].ability !== 'hero') finalScores[k] *= 2; } }
+                }
+                let rowSum = 0;
+                for(let i=0; i<finalScores.length; i++) {
+                    rowSum += finalScores[i];
+                    if (cardDivs[i]) {
+                        let existingOverlay = cardDivs[i].querySelector('.field-overlay'); if(existingOverlay) existingOverlay.remove();
+                        let overlay = document.createElement('div'); overlay.className = 'field-overlay';
+                        let color = (finalScores[i] > rowCards[i].score) ? '#00ff00' : '#fff'; if (finalScores[i] < rowCards[i].score) color = 'red'; 
+                        overlay.innerHTML = `<div style="color:${color}; font-size:14px; font-weight:bold; text-shadow:1px 1px 1px #000;">${finalScores[i]}</div>`; cardDivs[i].appendChild(overlay);
+                    }
+                }
+                document.getElementById(`score-${side}-${type}`).innerText = rowSum; total += rowSum;
+            });
+            document.getElementById(`${side}-total`).innerText = total;
+        });
+    }
+
+    // [AI 전략 업데이트: "반드시 이겨야 하는 상황" 추가]
+    function enemyAI() {
+        if(gameState.enemyPassed) return;
+        
+        let pScore = parseInt(document.getElementById('player-total').innerText);
+        let eScore = parseInt(document.getElementById('enemy-total').innerText);
+        let hand = gameState.enemyHand;
+        let playerHandCount = gameState.playerHand.length;
+        
+        // 1. 카드가 없으면 무조건 패스
+        if (hand.length === 0) { passRound('enemy'); return; }
+
+        // [중요 조건] 적군이 이미 1패 상태(플레이어 1승)인지 확인
+        // 플레이어 승수가 1이고, 적군 승수가 0이면 -> "벼랑 끝" (이번 판 지면 끝)
+        // 1:1 상황(마지막 라운드)도 "벼랑 끝"
+        const isDesperate = (gameState.playerWins > 0); 
+
+        // 2. 플레이어가 패스한 경우
+        if (gameState.playerPassed) {
+            // 이미 이겼으면 즉시 패스 (승리 확정)
+            if (eScore > pScore) { setTimeout(() => passRound('enemy'), 500); return; }
+            
+            // 아직 지고 있는데, 격차가 너무 크면(20점 이상) 포기할까?
+            // 단, "벼랑 끝(isDesperate)"이면 절대 포기 안함 (카드가 있는 한)
+            if (!isDesperate && (pScore - eScore > 20) && hand.length < 4) {
+                setTimeout(() => passRound('enemy'), 500); return; 
+            }
+            
+            // 이길 수 있는지 계산 (최소한의 카드로 역전 시도)
+            let playableUnits = hand.filter(c => ['melee','ranged','siege'].includes(c.type));
+            playableUnits.sort((a,b) => a.score - b.score);
+            
+            // 낼 수 있는 가장 낮은 카드로 역전 가능하면 그거 냄
+            if (playableUnits.length > 0) {
+                 // 벼랑 끝이면 그냥 냄 (어차피 이겨야 하니까)
+                 // 일반 상황이면 계산해서 이득일 때만 냄
+                 if (isDesperate || (eScore + playableUnits[0].score > pScore)) {
+                     // 만약 가장 약한걸로 안되면? -> 더 센걸 찾아야 함 (벼랑 끝일 때)
+                     if (isDesperate && (eScore + playableUnits[0].score <= pScore)) {
+                         // 역순 정렬(센거부터)해서 시도
+                         playableUnits.sort((a,b) => b.score - a.score);
+                     }
+                     let idx = hand.indexOf(playableUnits[0]);
+                     playCard('enemy', idx); return;
+                 }
+            }
+        } 
+        
+        // 3. 플레이어가 진행 중인 경우 (맞불 작전)
+        else {
+            // [전략 A: 승리 굳히기]
+            // AI가 15점 이상 앞서고 있고, 내 카드 수가 상대보다 적거나 같으면 패스 
+            // (단, "벼랑 끝"이면 패스 안하고 확실하게 이기려 듦 -> 수정: 벼랑 끝이어도 점수가 높으면 패스해도 됨? 아니, 상대가 역전하면 끝나니까 조심해야 함. 일단 점수 높으면 패스 유지)
+            if (!isDesperate && (eScore > pScore + 15) && (hand.length <= playerHandCount)) {
+                setTimeout(() => passRound('enemy'), 500); return;
+            }
+
+            // [전략 B: 손절매]
+            // AI가 15점 이상 뒤지고 있으면 포기
+            // [수정] "벼랑 끝(isDesperate)"이면 절대 포기 안함 (끝까지 쫓아감)
+            if (!isDesperate && (eScore < pScore - 15) && (hand.length < playerHandCount)) {
+                 setTimeout(() => passRound('enemy'), 500); return;
+            }
+        }
+
+        // --- 카드 선택 로직 ---
+        
+        // 1순위: 스파이
+        let spyIdx = hand.findIndex(c => c.ability === 'spy');
+        if (spyIdx !== -1) { playCard('enemy', spyIdx); return; }
+
+        let decoyIdx = hand.findIndex(c => c.ability === 'decoy');
+        let hornIdx = hand.findIndex(c => c.ability === 'horn');
+        let scorchIdx = hand.findIndex(c => c.ability === 'scorch');
+        let medicIdx = hand.findIndex(c => c.ability === 'medic');
+        
+        let unitIndices = [];
+        hand.forEach((c, i) => {
+            if (['melee','ranged','siege'].includes(c.type) && c.ability !== 'spy') {
+                unitIndices.push({idx: i, score: c.score, isHero: c.ability==='hero'});
+            }
+        });
+
+        // 벼랑 끝이면 영웅이나 센 카드를 아끼지 않음
+        // 일반 상황이면 아낌
+
+        // 지휘관의 뿔피리
+        if (hornIdx !== -1 && eScore > 12) { playCard('enemy', hornIdx); return; }
+
+        // 간호사
+        if (medicIdx !== -1) {
+             let hasUnitInGraveyard = gameState.enemyGraveyard.some(c => c.img.indexOf('enemy_') !== -1);
+             if (hasUnitInGraveyard) { playCard('enemy', medicIdx); return; }
+        }
+
+        // 소치
+        if (scorchIdx !== -1) {
+            let hasBigThreat = false;
+            ['melee', 'ranged', 'siege'].forEach(t => {
+                gameState.playerField[t].forEach(c => { if(c.ability!=='hero' && c.score >= 7) hasBigThreat=true; });
+            });
+            if(hasBigThreat) { playCard('enemy', scorchIdx); return; }
+        }
+
+        // 미끼 (스파이 제외)
+        if (decoyIdx !== -1) {
+            let bestTarget = null, bestPriority = -1; 
+            ['melee', 'ranged', 'siege'].forEach(type => {
+                gameState.enemyField[type].forEach((card, cIdx) => {
+                    if (card.ability === 'hero') return; 
+                    if (card.ability === 'spy') return; // [New Logic] AI also ignores spies
+                    let priority = 0; if (card.ability === 'medic') priority = 2; else if (card.score >= 8) priority = 1; 
+                    if (priority > bestPriority) { bestPriority = priority; bestTarget = { type: type, index: cIdx, card: card }; }
+                });
+            });
+            if (bestTarget && bestPriority > 0) {
+                let decoyCard = hand[decoyIdx]; showActionNotification(`적군이 [미끼]를 냈습니다!`);
+                hand.splice(decoyIdx, 1); let targetRow = gameState.enemyField[bestTarget.type]; let returnedCard = targetRow[bestTarget.index]; targetRow[bestTarget.index] = decoyCard; hand.push(returnedCard); 
+                try{ sounds.decoy.play(); }catch(e){} updateDeckUI(); renderHand(); renderEnemyHand(); renderField(); calcScore(); switchTurn(); return;
+            }
+        }
+
+        // 유닛 내기
+        if (unitIndices.length > 0) {
+            if (isDesperate) {
+                // 벼랑 끝: 가장 센 카드부터 내서 기선 제압 or 추격
+                unitIndices.sort((a, b) => b.score - a.score);
+            } else {
+                // 일반 상황: 간 보기 (약한거 부터)
+                unitIndices.sort((a, b) => a.score - b.score);
+            }
+            playCard('enemy', unitIndices[0].idx);
+            return;
+        }
+
+        playCard('enemy', 0);
+    }
+
+    function passRound(who) {
+        if(who === 'player') {
+            gameState.playerPassed = true; document.getElementById('pass-btn').disabled = true; document.getElementById('pass-btn').style.display = 'none'; 
+            document.getElementById('player-pass-msg').style.display = 'block'; try{ sounds.pass.play(); }catch(e){}
+        } else { gameState.enemyPassed = true; document.getElementById('enemy-pass-msg').style.display = 'block'; }
+        if(gameState.playerPassed && gameState.enemyPassed) { endRoundStart(); } else { if(who === 'player') setTurn('enemy'); else setTurn('player'); }
+    }
+    document.getElementById('pass-btn').onclick = () => passRound('player');
+    function endRoundStart() { clearTimeout(aiTimer); setTimeout(endRound, 1000); }
+    function endRound() {
+        calcScore(); 
+        let pScore = parseInt(document.getElementById('player-total').innerText, 10); let eScore = parseInt(document.getElementById('enemy-total').innerText, 10);
+        let pBadge = document.getElementById('player-result-badge'); let eBadge = document.getElementById('enemy-result-badge');
+        let roundWinner = ''; 
+        if(pScore > eScore) { gameState.playerWins++; gameState.lastWinner = 'player'; pBadge.classList.add('result-win'); try{ sounds.win.play(); }catch(e){} roundWinner = 'player'; } 
+        else if(eScore > pScore) { gameState.enemyWins++; gameState.lastWinner = 'enemy'; eBadge.classList.add('result-win'); try{ sounds.defeat.play(); }catch(e){} roundWinner = 'enemy'; } 
+        else { gameState.playerWins++; gameState.enemyWins++; gameState.lastWinner = 'player'; roundWinner = 'draw'; }
+        
+        document.getElementById('player-win-count').innerText = gameState.playerWins + "승"; document.getElementById('enemy-win-count').innerText = gameState.enemyWins + "승";
+        pBadge.style.display = 'block'; eBadge.style.display = 'block'; pBadge.innerText = gameState.playerWins + "승"; eBadge.innerText = gameState.enemyWins + "승";
+        
+        document.getElementById('input-blocker').style.display = 'none';
+
+        setTimeout(() => {
+            let msg = ""; let scoreStr = `${selectedPlayerName}(${gameState.playerWins}):${selectedEnemyName}(${gameState.enemyWins})`;
+            if (gameState.playerWins === gameState.enemyWins) msg = `${scoreStr} 무승부`; else if (gameState.playerWins > gameState.enemyWins) msg = `${scoreStr} 1승!!!`; else msg = `${scoreStr} 1패~`;
+            if(gameState.playerWins >= 2 || gameState.enemyWins >= 2) {
+                if (gameState.playerWins >= 2 && gameState.enemyWins < 2) msg = `${scoreStr} 최종 승리!!!`; else if (gameState.enemyWins >= 2 && gameState.playerWins < 2) msg = `${scoreStr} 최종 패배...`; else msg = `${scoreStr} 무승부 (동반 승리)`;
+                showMsg(msg, true);
+            } else { showMsg(msg, false); }
+        }, 1000);
+    }
+    function showMsg(text, isGameOver) {
+        document.getElementById('msg-overlay').style.display = 'flex'; document.getElementById('msg-text').innerText = text;
+        const btn = document.getElementById('next-btn');
+        if(isGameOver) { btn.innerText = "게임 다시하기"; btn.onclick = () => location.reload(); } 
+        else { btn.innerText = "다음 라운드"; btn.onclick = nextRound; }
+    }
+    function nextRound() {
+        if (gameState.playerHand.length === 0 && gameState.enemyHand.length === 0) {
+            let pWins = gameState.playerWins;
+            let eWins = gameState.enemyWins;
+            let msg = "";
+            if (pWins > eWins) msg = `카드가 모두 소진되었습니다. 최종 승리! (${pWins}:${eWins})`;
+            else if (eWins > pWins) msg = `카드가 모두 소진되었습니다. 최종 패배... (${pWins}:${eWins})`;
+            else msg = `카드가 모두 소진되었습니다. 무승부! (${pWins}:${eWins})`;
+            
+            showMsg(msg, true); 
+            return;
+        }
+
+        document.getElementById('msg-overlay').style.display = 'none'; clearTimeout(aiTimer);
+        ['melee', 'ranged', 'siege'].forEach(type => {
+            gameState.playerField[type].forEach(c => gameState.playerGraveyard.push(c)); gameState.enemyField[type].forEach(c => gameState.enemyGraveyard.push(c));
+        });
+        gameState.playerField = { melee:[], ranged:[], siege:[] }; gameState.enemyField = { melee:[], ranged:[], siege:[] };
+        gameState.commanders = { player: {melee:false, ranged:false, siege:false}, enemy: {melee:false, ranged:false, siege:false} };
+        gameState.weather = { frost: false, fog: false, rain: false };
+        gameState.playerPassed = false; gameState.enemyPassed = false;
+        
+        gameState.isSelectingRow = false; gameState.isUsingDecoy = false; gameState.pendingCardIdx = null;
+
+        const passBtn = document.getElementById('pass-btn'); passBtn.disabled = false; passBtn.style.display = 'block';
+        document.getElementById('player-pass-msg').style.display = 'none'; document.getElementById('enemy-pass-msg').style.display = 'none';
+        document.getElementById('player-result-badge').style.display = 'none'; document.getElementById('player-result-badge').classList.remove('result-win');
+        document.getElementById('enemy-result-badge').style.display = 'none'; document.getElementById('enemy-result-badge').classList.remove('result-win');
+        document.querySelectorAll('.commander-slot').forEach(el=>{ el.innerHTML='지휘'; el.style.backgroundImage='none'; el.classList.remove('target-mode'); });
+        
+        updateDeckUI(); renderHand(); renderEnemyHand(); renderField(); calcScore(); setTurn(gameState.lastWinner);
+    }
+    function nextRoundOrRestart() { const btn = document.getElementById('next-btn'); if(btn.innerText === "게임 다시하기") location.reload(); else nextRound(); }
+    init();
+</script>
+</body>
+</html>
